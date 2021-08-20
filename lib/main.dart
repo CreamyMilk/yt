@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:url_launcher/url_launcher.dart';
 
+
 void main() {
   runApp(MyApp());
 }
@@ -17,25 +18,33 @@ class MyApp extends StatelessWidget {
       title: 'YT',
       theme: ThemeData(
         primaryColor: Color(0xff0a0a0a),
-        accentColor: Colors.white,
+        //accentColor: Colors.white,
         appBarTheme: AppBarTheme(
           elevation: 0,
-          brightness: Brightness.light,
+          //brightness: Brightness.light,
           backgroundColor: Colors.white,
-          textTheme: TextTheme(
-            headline6: TextStyle(
-              color: Colors.black,
-              fontSize: 16,
-              fontWeight: FontWeight.w500,
-            ),
+          // textTheme: TextTheme(
+          //   headline6: TextStyle(
+          //     color: Colors.black,
+          //     fontSize: 16,
+          //     fontWeight: FontWeight.w500,
+          //   ),
+          // ),
+          titleTextStyle: TextStyle(
+            color: Colors.black,
+            fontSize: 20,
+            fontWeight: FontWeight.w500,
           ),
           iconTheme: IconThemeData(
             color: Colors.white,
           ),
         ),
       ),
+
+      themeMode: ThemeMode.dark,
+
       darkTheme: ThemeData(
-        accentColor: Color(0xff0a0a0a),
+        //accentColor: Color(0xff0050B5),
         primaryColor: Colors.white,
         scaffoldBackgroundColor: Color(0xff0a0a0a),
         textTheme: TextTheme(
@@ -47,14 +56,19 @@ class MyApp extends StatelessWidget {
         ),
         appBarTheme: AppBarTheme(
           elevation: 0,
-          brightness: Brightness.light,
+          //brightness: Brightness.light,
           backgroundColor: Colors.black,
-          textTheme: TextTheme(
-            headline6: TextStyle(
-              color: Colors.white,
-              fontSize: 16,
-              fontWeight: FontWeight.w500,
-            ),
+          // textTheme: TextTheme(
+          //   headline6: TextStyle(
+          //     color:  Theme.of(context).primaryColor,
+          //     fontSize: 16,
+          //     fontWeight: FontWeight.w500,
+          //   ),
+          // ),
+          titleTextStyle: TextStyle(
+            color: Colors.white,
+            fontSize: 20,
+            fontWeight: FontWeight.w500,
           ),
           iconTheme: IconThemeData(
             color: Colors.white,
@@ -68,7 +82,7 @@ class MyApp extends StatelessWidget {
 
 class HomePage extends StatefulWidget {
   const HomePage({Key? key}) : super(key: key);
-
+  
   static const topics = [
     "🧪 Science",
     "✋ Action",
@@ -93,6 +107,8 @@ class _HomePageState extends State<HomePage> {
     queryValue = "the";
     super.initState();
   }
+  
+
 
   Future getMovies(String name) async {
     final url =
@@ -106,7 +122,7 @@ class _HomePageState extends State<HomePage> {
       String status = myjson["status"];
       var data = myjson["data"];
       if (status == 'ok' && data != null) {
-        //print(myjson["data"]["movies"][0]);
+        //print(myjson);
         return data["movies"];
       } else {
         print("The Movie $name wasn't found");
@@ -120,18 +136,26 @@ class _HomePageState extends State<HomePage> {
 
   @override
   Widget build(BuildContext context) {
+
     Color textColor = Theme.of(context).primaryColor;
-    Color darktextColor = Theme.of(context).accentColor;
+    //Color darktextColor = Theme.of(context).accentColor;
+    DateTime now = DateTime.now();
+
     return Scaffold(
       extendBody: true,
       appBar: AppBar(
-        title: Text("Good Morning ,\nKinyua "),
+        title: now.hour < 12
+            ? Text("Good Morning,\nKinyua ")
+            : now.hour < 20
+                ? Text("Good Afternoon,\nKinyua ")
+                : Text("Good Evening,\nKinyua "),
         centerTitle: false,
         actions: [
           IconButton(
             onPressed: () {},
             icon: Icon(
-              CupertinoIcons.search,
+              Icons.dark_mode,
+              color: textColor,
             ),
           ),
           SizedBox(
@@ -141,10 +165,8 @@ class _HomePageState extends State<HomePage> {
             radius: 18,
             backgroundColor: HomePage.amber,
             child: Transform.translate(
-              offset: Offset(-1, 2),
-              child: Image.network(
-                  "https://raw.githubusercontent.com/lesliearkorful/clubhouse-concept/master/assets/images/11.png"),
-            ),
+                offset: Offset(-1, 2),
+                child: Image.asset('assets/images/dp.png')),
           ),
           SizedBox(
             width: 20,
@@ -160,7 +182,7 @@ class _HomePageState extends State<HomePage> {
               itemBuilder: (context, index) {
                 return InputChip(
                     onPressed: () {},
-                    backgroundColor: HomePage.blue.withOpacity(.5),
+                    backgroundColor: HomePage.blue.withOpacity(.7),
                     label: Text(
                       "${HomePage.topics[index]}",
                       style: TextStyle(height: 1.2, color: Colors.black),
@@ -185,6 +207,7 @@ class _HomePageState extends State<HomePage> {
               });
             },
             decoration: InputDecoration(
+                fillColor: Theme.of(context).backgroundColor.withOpacity(.1),
                 contentPadding:
                     EdgeInsets.symmetric(vertical: 8, horizontal: 16),
                 border: OutlineInputBorder(
@@ -225,7 +248,7 @@ class _HomePageState extends State<HomePage> {
                           dynamic movieRating = movies[index]["rating"];
                           int rawduaration = movies[index]["runtime"];
                           int hours = (rawduaration / 60).floor();
-                          int seconds = rawduaration % 60;
+                          int minutes = rawduaration % 60;
 
                           List<dynamic> movieTorrents =
                               movies[index]["torrents"] as List;
@@ -241,7 +264,7 @@ class _HomePageState extends State<HomePage> {
                                 height: 10,
                               ),
                               MaterialButton(
-                                color: darktextColor,
+                                color: Colors.blueAccent[400],
                                 child: Text(
                                   "YTS",
                                   style: TextStyle(color: textColor),
@@ -266,8 +289,6 @@ class _HomePageState extends State<HomePage> {
                                   padding: EdgeInsets.fromLTRB(20, 0, 20, 10),
                                   scrollDirection: Axis.horizontal,
                                   itemBuilder: (context, index) {
-                                    String torrentHash =
-                                        "${movieTorrents[index]["hash"]}";
                                     String torrentUrl =
                                         "${movieTorrents[index]["url"]}";
 
@@ -280,9 +301,9 @@ class _HomePageState extends State<HomePage> {
                                         backgroundColor:
                                             HomePage.blue.withOpacity(.5),
                                         label: Text(
-                                          "$torrentHash",
+                                          "${movieTorrents[index]["quality"]} ${movieTorrents[index]["type"]}",
                                           style: TextStyle(
-                                              height: 1.2, color: Colors.black),
+                                              height: 1.2,color: Colors.black),
                                         ));
                                   },
                                   separatorBuilder: (_, __) => SizedBox(
@@ -295,26 +316,38 @@ class _HomePageState extends State<HomePage> {
                             leading: Container(
                               child: Image.network(
                                 movieImage,
-                                height: 50,
+                                height: 90,
                                 width: 50,
                               ),
                             ),
                             trailing: Column(
                               children: [
-                                Text(
-                                  "$movieRating / 10.0",
-                                  style: TextStyle(
-                                    color: textColor,
-                                    fontSize: 10,
-                                    fontWeight: FontWeight.w100,
+                                SizedBox(
+                                  width: 40,
+                                  child: Row(
+                                    children: [
+                                      Icon(
+                                        CupertinoIcons.star_fill,
+                                        color: Colors.yellow[600],
+                                        size: 15,
+                                      ),
+                                      Text(
+                                        " $movieRating",
+                                        style: TextStyle(
+                                          color: textColor,
+                                          fontSize: 11,
+                                          fontWeight: FontWeight.w100,
+                                        ),
+                                      ),
+                                    ],
                                   ),
                                 ),
                                 Spacer(),
                                 Text(
-                                  "$hours Hr - $seconds Sec",
+                                  "$hours Hr - $minutes Min",
                                   style: TextStyle(
                                       color: Colors.grey,
-                                      fontSize: 10,
+                                      fontSize: 11,
                                       fontWeight: FontWeight.w300,
                                       fontStyle: FontStyle.italic),
                                 ),
