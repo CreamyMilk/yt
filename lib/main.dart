@@ -5,7 +5,6 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:url_launcher/url_launcher.dart';
 
-
 void main() {
   runApp(MyApp());
 }
@@ -18,18 +17,18 @@ class MyApp extends StatelessWidget {
       title: 'YT',
       theme: ThemeData(
         primaryColor: Color(0xff0a0a0a),
-        //accentColor: Colors.white,
+        accentColor: Colors.white,
         appBarTheme: AppBarTheme(
           elevation: 0,
-          //brightness: Brightness.light,
+          brightness: Brightness.light,
           backgroundColor: Colors.white,
-          // textTheme: TextTheme(
-          //   headline6: TextStyle(
-          //     color: Colors.black,
-          //     fontSize: 16,
-          //     fontWeight: FontWeight.w500,
-          //   ),
-          // ),
+          textTheme: TextTheme(
+            headline6: TextStyle(
+              color: Colors.black,
+              fontSize: 16,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
           titleTextStyle: TextStyle(
             color: Colors.black,
             fontSize: 20,
@@ -40,11 +39,8 @@ class MyApp extends StatelessWidget {
           ),
         ),
       ),
-
-      themeMode: ThemeMode.dark,
-
       darkTheme: ThemeData(
-        //accentColor: Color(0xff0050B5),
+        accentColor: Color(0xff0050B5),
         primaryColor: Colors.white,
         scaffoldBackgroundColor: Color(0xff0a0a0a),
         textTheme: TextTheme(
@@ -56,15 +52,15 @@ class MyApp extends StatelessWidget {
         ),
         appBarTheme: AppBarTheme(
           elevation: 0,
-          //brightness: Brightness.light,
+          brightness: Brightness.light,
           backgroundColor: Colors.black,
-          // textTheme: TextTheme(
-          //   headline6: TextStyle(
-          //     color:  Theme.of(context).primaryColor,
-          //     fontSize: 16,
-          //     fontWeight: FontWeight.w500,
-          //   ),
-          // ),
+          textTheme: TextTheme(
+            headline6: TextStyle(
+              color: Colors.white, 
+              fontSize: 16,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
           titleTextStyle: TextStyle(
             color: Colors.white,
             fontSize: 20,
@@ -82,7 +78,7 @@ class MyApp extends StatelessWidget {
 
 class HomePage extends StatefulWidget {
   const HomePage({Key? key}) : super(key: key);
-  
+
   static const topics = [
     "🧪 Science",
     "✋ Action",
@@ -101,18 +97,18 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> {
   late String queryValue;
+  late String userName;
   @override
   void initState() {
     print("Setting up inital state");
-    queryValue = "the";
+    queryValue = "";
+    userName = "Kinyua";
     super.initState();
   }
-  
-
 
   Future getMovies(String name) async {
     final url =
-        "https://yts.mx/api/v2/list_movies.json?query_term=$name&limit=50";
+        "https://yts.mx/api/v2/list_movies.json?query_term=$name&limit=50&sort_by=rating";
     try {
       http.Response response = await http.get(Uri.parse(url), headers: {
         "Accept": "application/json",
@@ -136,7 +132,6 @@ class _HomePageState extends State<HomePage> {
 
   @override
   Widget build(BuildContext context) {
-
     Color textColor = Theme.of(context).primaryColor;
     //Color darktextColor = Theme.of(context).accentColor;
     DateTime now = DateTime.now();
@@ -145,10 +140,10 @@ class _HomePageState extends State<HomePage> {
       extendBody: true,
       appBar: AppBar(
         title: now.hour < 12
-            ? Text("Good Morning,\nKinyua ")
+            ? Text("Good Morning,\n$userName")
             : now.hour < 20
-                ? Text("Good Afternoon,\nKinyua ")
-                : Text("Good Evening,\nKinyua "),
+                ? Text("Good Afternoon,\n$userName ")
+                : Text("Good Evening,\n$userName"),
         centerTitle: false,
         actions: [
           IconButton(
@@ -264,10 +259,11 @@ class _HomePageState extends State<HomePage> {
                                 height: 10,
                               ),
                               MaterialButton(
-                                color: Colors.blueAccent[400],
+                                color:HomePage.blue.withOpacity(.5),
+                                elevation:0,
                                 child: Text(
                                   "YTS",
-                                  style: TextStyle(color: textColor),
+                                  style: TextStyle(color:Colors.black),
                                 ),
                                 onPressed: () async {
                                   if (await canLaunch(movieUrl)) {
@@ -282,7 +278,6 @@ class _HomePageState extends State<HomePage> {
                                   style: TextStyle(
                                     color: textColor,
                                   )),
-                              //Text("$movieTorrents"),
                               SizedBox(
                                 height: 100,
                                 child: ListView.separated(
@@ -303,7 +298,7 @@ class _HomePageState extends State<HomePage> {
                                         label: Text(
                                           "${movieTorrents[index]["quality"]} ${movieTorrents[index]["type"]}",
                                           style: TextStyle(
-                                              height: 1.2,color: Colors.black),
+                                              height: 1.2, color: Colors.black),
                                         ));
                                   },
                                   separatorBuilder: (_, __) => SizedBox(
@@ -316,8 +311,8 @@ class _HomePageState extends State<HomePage> {
                             leading: Container(
                               child: Image.network(
                                 movieImage,
-                                height: 90,
-                                width: 50,
+                                height: 100,
+                                width: 60,
                               ),
                             ),
                             trailing: Column(
@@ -367,7 +362,7 @@ class _HomePageState extends State<HomePage> {
                       style: TextStyle(color: textColor),
                     );
                   }
-                }),
+                },),
           )
         ],
       ),
