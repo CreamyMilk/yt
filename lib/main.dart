@@ -1,3 +1,5 @@
+// ignore_for_file: deprecated_member_use
+
 import 'dart:convert';
 
 import 'package:flutter/cupertino.dart';
@@ -56,7 +58,7 @@ class MyApp extends StatelessWidget {
           backgroundColor: Colors.black,
           textTheme: TextTheme(
             headline6: TextStyle(
-              color: Colors.white, 
+              color: Colors.white,
               fontSize: 16,
               fontWeight: FontWeight.w500,
             ),
@@ -98,6 +100,8 @@ class HomePage extends StatefulWidget {
 class _HomePageState extends State<HomePage> {
   late String queryValue;
   late String userName;
+  bool disablebut = false;
+  int page = 1;
   @override
   void initState() {
     print("Setting up inital state");
@@ -106,9 +110,31 @@ class _HomePageState extends State<HomePage> {
     super.initState();
   }
 
-  Future getMovies(String name) async {
-    final url =
-        "https://yts.mx/api/v2/list_movies.json?query_term=$name&limit=50&sort_by=rating";
+  void _incrementpage() {
+    setState(() {
+      page++;
+    });
+  }
+
+  void _decrementpage() {
+    if (page > 1) {
+      setState(() {
+        page--;
+      });
+    }
+  }
+
+  Future getMovies(String name, int page) async {
+    disablebut = true;
+    final url;
+    print(page);
+    if (name == "") {
+      url =
+          "https://yts.mx/api/v2/list_movies.json?limit=20&sort_by=download_count&page=$page";
+    } else {
+      url =
+          "https://yts.mx/api/v2/list_movies.json?query_term=$name&limit=50&sort_by=rating";
+    }
     try {
       http.Response response = await http.get(Uri.parse(url), headers: {
         "Accept": "application/json",
@@ -119,8 +145,10 @@ class _HomePageState extends State<HomePage> {
       var data = myjson["data"];
       if (status == 'ok' && data != null) {
         //print(myjson);
+        disablebut = false;
         return data["movies"];
       } else {
+        disablebut = false;
         print("The Movie $name wasn't found");
       }
     } catch (err) {
@@ -130,12 +158,151 @@ class _HomePageState extends State<HomePage> {
     return [];
   }
 
+  Widget listMovies(snapshot) {
+    Color textColor = Theme.of(context).primaryColor;
+    if (snapshot.connectionState == ConnectionState.waiting)
+      return Center(
+        child: CircularProgressIndicator(
+          backgroundColor: Colors.transparent,
+          color: textColor,
+        ),
+      );
+    if (snapshot.hasData) {
+      final movies = snapshot.data as List;
+      return ListView.separated(
+          separatorBuilder: (_, __) => Divider(
+                thickness: 0.1,
+                color: textColor,
+              ),
+          itemCount: movies.length,
+          itemBuilder: (ctx, index) {
+            int movieYear = movies[index]["year"];
+            String movieTitle = movies[index]["title"];
+            String movieImage = movies[index]["small_cover_image"];
+            String movieUrl = movies[index]["url"];
+            String movieDescription = movies[index]["summary"];
+            dynamic movieRating = movies[index]["rating"];
+            int rawduaration = movies[index]["runtime"];
+            int hours = (rawduaration / 60).floor();
+            int minutes = rawduaration % 60;
+
+            List<dynamic> movieTorrents = movies[index]["torrents"] as List;
+
+            return ExpansionTile(
+              expandedAlignment: Alignment.centerLeft,
+              expandedCrossAxisAlignment: CrossAxisAlignment.start,
+              childrenPadding: EdgeInsets.symmetric(horizontal: 40),
+              children: [
+                SizedBox(
+                  height: 10,
+                ),
+                MaterialButton(
+                  color: HomePage.blue.withOpacity(.5),
+                  elevation: 0,
+                  child: Text(
+                    "YTS",
+                    style: TextStyle(color: Colors.black),
+                  ),
+                  onPressed: () async {
+                    if (await canLaunch(movieUrl)) {
+                      launch(movieUrl);
+                    }
+                  },
+                ),
+                SizedBox(
+                  height: 10,
+                ),
+                Text("$movieDescription",
+                    style: TextStyle(
+                      color: textColor,
+                    )),
+                SizedBox(
+                  height: 100,
+                  child: ListView.separated(
+                    padding: EdgeInsets.fromLTRB(20, 0, 20, 10),
+                    scrollDirection: Axis.horizontal,
+                    itemBuilder: (context, index) {
+                      String torrentUrl = "${movieTorrents[index]["url"]}";
+
+                      return InputChip(
+                          onPressed: () async {
+                            if (await canLaunch(torrentUrl)) {
+                              launch(torrentUrl);
+                            }
+                          },
+                          backgroundColor: HomePage.blue.withOpacity(.5),
+                          label: Text(
+                            "${movieTorrents[index]["quality"]} ${movieTorrents[index]["type"]}",
+                            style: TextStyle(height: 1.2, color: Colors.black),
+                          ));
+                    },
+                    separatorBuilder: (_, __) => SizedBox(
+                      width: 10,
+                    ),
+                    itemCount: movieTorrents.length,
+                  ),
+                ),
+              ],
+              leading: Container(
+                child: Image.network(
+                  movieImage,
+                  height: 100,
+                  width: 60,
+                ),
+              ),
+              trailing: Column(
+                children: [
+                  SizedBox(
+                    width: 40,
+                    child: Row(
+                      children: [
+                        Icon(
+                          CupertinoIcons.star_fill,
+                          color: Colors.yellow[600],
+                          size: 15,
+                        ),
+                        Text(
+                          " $movieRating",
+                          style: TextStyle(
+                            color: textColor,
+                            fontSize: 11,
+                            fontWeight: FontWeight.w100,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  Spacer(),
+                  Text(
+                    "$hours Hr - $minutes Min",
+                    style: TextStyle(
+                        color: Colors.grey,
+                        fontSize: 11,
+                        fontWeight: FontWeight.w300,
+                        fontStyle: FontStyle.italic),
+                  ),
+                ],
+              ),
+              subtitle: Text("$movieYear", style: TextStyle(color: textColor)),
+              title: Text(
+                "$movieTitle",
+                style: TextStyle(color: textColor),
+              ),
+            );
+          });
+    } else {
+      return Text(
+        "No Movie Found",
+        style: TextStyle(color: textColor),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     Color textColor = Theme.of(context).primaryColor;
     //Color darktextColor = Theme.of(context).accentColor;
     DateTime now = DateTime.now();
-
     return Scaffold(
       extendBody: true,
       appBar: AppBar(
@@ -216,153 +383,43 @@ class _HomePageState extends State<HomePage> {
           ),
           Expanded(
             child: FutureBuilder(
-                future: getMovies(queryValue),
-                builder: (ctx, snapshot) {
-                  if (snapshot.connectionState == ConnectionState.waiting)
-                    return Center(
-                      child: CircularProgressIndicator(
-                        backgroundColor: Colors.transparent,
-                        color: textColor,
-                      ),
-                    );
-                  if (snapshot.hasData) {
-                    final movies = snapshot.data as List;
-                    return ListView.separated(
-                        separatorBuilder: (_, __) => Divider(
-                              thickness: 0.1,
-                              color: textColor,
-                            ),
-                        itemCount: movies.length,
-                        itemBuilder: (ctx, index) {
-                          int movieYear = movies[index]["year"];
-                          String movieTitle = movies[index]["title"];
-                          String movieImage =
-                              movies[index]["small_cover_image"];
-                          String movieUrl = movies[index]["url"];
-                          String movieDescription = movies[index]["summary"];
-                          dynamic movieRating = movies[index]["rating"];
-                          int rawduaration = movies[index]["runtime"];
-                          int hours = (rawduaration / 60).floor();
-                          int minutes = rawduaration % 60;
-
-                          List<dynamic> movieTorrents =
-                              movies[index]["torrents"] as List;
-
-                          return ExpansionTile(
-                            expandedAlignment: Alignment.centerLeft,
-                            expandedCrossAxisAlignment:
-                                CrossAxisAlignment.start,
-                            childrenPadding:
-                                EdgeInsets.symmetric(horizontal: 40),
-                            children: [
-                              SizedBox(
-                                height: 10,
-                              ),
-                              MaterialButton(
-                                color:HomePage.blue.withOpacity(.5),
-                                elevation:0,
-                                child: Text(
-                                  "YTS",
-                                  style: TextStyle(color:Colors.black),
-                                ),
-                                onPressed: () async {
-                                  if (await canLaunch(movieUrl)) {
-                                    launch(movieUrl);
-                                  }
-                                },
-                              ),
-                              SizedBox(
-                                height: 10,
-                              ),
-                              Text("$movieDescription",
-                                  style: TextStyle(
-                                    color: textColor,
-                                  )),
-                              SizedBox(
-                                height: 100,
-                                child: ListView.separated(
-                                  padding: EdgeInsets.fromLTRB(20, 0, 20, 10),
-                                  scrollDirection: Axis.horizontal,
-                                  itemBuilder: (context, index) {
-                                    String torrentUrl =
-                                        "${movieTorrents[index]["url"]}";
-
-                                    return InputChip(
-                                        onPressed: () async {
-                                          if (await canLaunch(torrentUrl)) {
-                                            launch(torrentUrl);
-                                          }
-                                        },
-                                        backgroundColor:
-                                            HomePage.blue.withOpacity(.5),
-                                        label: Text(
-                                          "${movieTorrents[index]["quality"]} ${movieTorrents[index]["type"]}",
-                                          style: TextStyle(
-                                              height: 1.2, color: Colors.black),
-                                        ));
-                                  },
-                                  separatorBuilder: (_, __) => SizedBox(
-                                    width: 10,
-                                  ),
-                                  itemCount: movieTorrents.length,
-                                ),
-                              ),
-                            ],
-                            leading: Container(
-                              child: Image.network(
-                                movieImage,
-                                height: 100,
-                                width: 60,
-                              ),
-                            ),
-                            trailing: Column(
-                              children: [
-                                SizedBox(
-                                  width: 40,
-                                  child: Row(
-                                    children: [
-                                      Icon(
-                                        CupertinoIcons.star_fill,
-                                        color: Colors.yellow[600],
-                                        size: 15,
-                                      ),
-                                      Text(
-                                        " $movieRating",
-                                        style: TextStyle(
-                                          color: textColor,
-                                          fontSize: 11,
-                                          fontWeight: FontWeight.w100,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                                Spacer(),
-                                Text(
-                                  "$hours Hr - $minutes Min",
-                                  style: TextStyle(
-                                      color: Colors.grey,
-                                      fontSize: 11,
-                                      fontWeight: FontWeight.w300,
-                                      fontStyle: FontStyle.italic),
-                                ),
-                              ],
-                            ),
-                            subtitle: Text("$movieYear",
-                                style: TextStyle(color: textColor)),
-                            title: Text(
-                              "$movieTitle",
-                              style: TextStyle(color: textColor),
-                            ),
-                          );
-                        });
-                  } else {
-                    return Text(
-                      "No Movie Found",
-                      style: TextStyle(color: textColor),
-                    );
-                  }
-                },),
+              future: getMovies(queryValue, page),
+              builder: (ctx, snapshot) {
+                return listMovies(snapshot);
+              },
+            ),
+          ),
+          SizedBox(
+            width: 200,
+            height: 50,
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                MaterialButton(
+                  onPressed: () {
+                    if (queryValue == "" && disablebut == false) {
+                      _decrementpage();
+                    }
+                  },
+                  child: Text(
+                    'Back',
+                    style: TextStyle(color: textColor),
+                  ),
+                ),
+                Text(
+                  '$page',
+                  style: TextStyle(color: textColor),
+                ),
+                MaterialButton(
+                  onPressed: () {
+                    if (queryValue == "" && disablebut == false) {
+                      _incrementpage();
+                    }
+                  },
+                  child: Text('Next', style: TextStyle(color: textColor)),
+                ),
+              ],
+            ),
           )
         ],
       ),
