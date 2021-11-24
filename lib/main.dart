@@ -98,10 +98,13 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
+  late bool showPage;
+  late Color textColor;
   late String queryValue;
   late String userName;
   bool disablebut = false;
   int page = 1;
+
   @override
   void initState() {
     print("Setting up inital state");
@@ -130,10 +133,12 @@ class _HomePageState extends State<HomePage> {
     print(page);
     if (name == "") {
       url =
-          "https://yts.mx/api/v2/list_movies.json?limit=20&sort_by=download_count&page=$page";
+          "https://yts.mx/api/v2/list_movies.json?limit=50&sort_by=download_count&page=$page";
+      showPage = true;
     } else {
       url =
           "https://yts.mx/api/v2/list_movies.json?query_term=$name&limit=50&sort_by=rating";
+      showPage = false;
     }
     try {
       http.Response response = await http.get(Uri.parse(url), headers: {
@@ -144,7 +149,6 @@ class _HomePageState extends State<HomePage> {
       String status = myjson["status"];
       var data = myjson["data"];
       if (status == 'ok' && data != null) {
-        //print(myjson);
         disablebut = false;
         return data["movies"];
       } else {
@@ -298,10 +302,50 @@ class _HomePageState extends State<HomePage> {
     }
   }
 
+  Widget pageButtons() {
+    if (showPage) {
+      return SizedBox(
+        width: 200,
+        height: 50,
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            MaterialButton(
+              onPressed: () {
+                if (queryValue == "" && disablebut == false) {
+                  _decrementpage();
+                }
+              },
+              child: Text(
+                'Back',
+                style: TextStyle(color: textColor),
+              ),
+            ),
+            Text(
+              '$page',
+              style: TextStyle(color: textColor),
+            ),
+            MaterialButton(
+              onPressed: () {
+                if (queryValue == "" && disablebut == false) {
+                  _incrementpage();
+                }
+              },
+              child: Text('Next', style: TextStyle(color: textColor)),
+            ),
+          ],
+        ),
+      );
+    } else {
+      return SizedBox();
+    }
+  }
+
+  streamMovie(snapshot){} //coming soon
+
   @override
   Widget build(BuildContext context) {
-    Color textColor = Theme.of(context).primaryColor;
-    //Color darktextColor = Theme.of(context).accentColor;
+    textColor = Theme.of(context).primaryColor;
     DateTime now = DateTime.now();
     return Scaffold(
       extendBody: true,
@@ -389,40 +433,10 @@ class _HomePageState extends State<HomePage> {
               },
             ),
           ),
-          SizedBox(
-            width: 200,
-            height: 50,
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                MaterialButton(
-                  onPressed: () {
-                    if (queryValue == "" && disablebut == false) {
-                      _decrementpage();
-                    }
-                  },
-                  child: Text(
-                    'Back',
-                    style: TextStyle(color: textColor),
-                  ),
-                ),
-                Text(
-                  '$page',
-                  style: TextStyle(color: textColor),
-                ),
-                MaterialButton(
-                  onPressed: () {
-                    if (queryValue == "" && disablebut == false) {
-                      _incrementpage();
-                    }
-                  },
-                  child: Text('Next', style: TextStyle(color: textColor)),
-                ),
-              ],
-            ),
-          )
+          pageButtons()
         ],
       ),
     );
   }
 }
+
