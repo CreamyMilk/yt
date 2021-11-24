@@ -189,7 +189,8 @@ class _HomePageState extends State<HomePage> {
             int rawduaration = movies[index]["runtime"];
             int hours = (rawduaration / 60).floor();
             int minutes = rawduaration % 60;
-
+            String imdbcode = movies[index]["imdb_code"];
+            String streamurl = "https://vidclouds.us/$imdbcode.html";
             List<dynamic> movieTorrents = movies[index]["torrents"] as List;
 
             return ExpansionTile(
@@ -201,7 +202,7 @@ class _HomePageState extends State<HomePage> {
                   height: 10,
                 ),
                 MaterialButton(
-                  color: HomePage.blue.withOpacity(.5),
+                  color: HomePage.blue.withOpacity(.7),
                   elevation: 0,
                   child: Text(
                     "YTS",
@@ -210,6 +211,22 @@ class _HomePageState extends State<HomePage> {
                   onPressed: () async {
                     if (await canLaunch(movieUrl)) {
                       launch(movieUrl);
+                    }
+                  },
+                ),
+                SizedBox(
+                  height: 10,
+                ),
+                MaterialButton(
+                  color: HomePage.blue.withOpacity(.7),
+                  elevation: 5,
+                  child: Text(
+                    "WATCH",
+                    style: TextStyle(color: Colors.black, fontSize: 15),
+                  ),
+                  onPressed: () async {
+                    if (await canLaunch(streamurl)) {
+                      launch(streamurl);
                     }
                   },
                 ),
@@ -341,8 +358,6 @@ class _HomePageState extends State<HomePage> {
     }
   }
 
-  streamMovie(snapshot){} //coming soon
-
   @override
   Widget build(BuildContext context) {
     textColor = Theme.of(context).primaryColor;
@@ -439,4 +454,3 @@ class _HomePageState extends State<HomePage> {
     );
   }
 }
-
